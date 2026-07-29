@@ -1,60 +1,78 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.26;
 
 contract AgentRegistry {
-    address public rwarebAdmin;
+    address public admin;
 
-    enum LicenseStatus { Active, Suspended, Expired }
-
-    struct Agent {
-        string rwarebLicenseNo;
+    struct Broker {
+        string nidaHash;
+        string licenseNumber;
         string fullName;
-        string agencyName;
-        bytes32 nidaHash;
-        LicenseStatus status;
-        uint256 validUntil;
+        string agency;
+        uint256 expirationTime;
+        bool isRegistered;
     }
 
-    mapping(address => Agent) public agents;
-    mapping(string => address) public licenseToAddress;
+    mapping(address => Broker) public brokers;
 
-    event AgentRegistered(address indexed agentWallet, string licenseNo, string fullName);
-    event StatusUpdated(address indexed agentWallet, LicenseStatus newStatus);
+    event BrokerRegistered(address indexed wallet, string licenseNumber, uint256 expirationTime);
+    event BrokerRenewed(address indexed wallet, uint256 newExpirationTime);
+
+    error OnlyAdmin();
+    error BrokerAlreadyRegistered();
+    error BrokerNotRegistered();
 
     modifier onlyAdmin() {
-        require(msg.sender == rwarebAdmin, "Caller is not RWAREB admin");
+        if (msg.sender != admin) revert OnlyAdmin();
         _;
     }
 
     constructor() {
-        rwarebAdmin = msg.sender;
+        admin = msg.sender; // The deployer is the initial RWAREB admin
     }
 
-    function registerAgent(
-        address _agentWallet,
-        string memory _licenseNo,
-        string memory _fullName,
-        string memory _agencyName,
-        bytes32 _nidaHash,
-        uint256 _durationDays
+    /// @notice Registers a new broker with their official details
+    function registerBroker(
+        address _wallet,
+        string calldata _nidaHash,
+        string calldata _licenseNumber,
+        string calldata _fullName,
+        string calldata _agency,
+        uint256 _validityDays
     ) external onlyAdmin {
-        require(_agentWallet != address(0), "Invalid wallet address");
-        
-        agents[_agentWallet] = Agent({
-            rwarebLicenseNo: _licenseNo,
-            fullName: _fullName,
-            agencyName: _agencyName,
+        if (brokers[_wallet].isRegistered) revert BrokerAlreadyRegistered();
+
+        uint256 expireTime = block.timestamp + (_validityDays * 1 days);
+
+        brokers[_wallet] = Broker({
             nidaHash: _nidaHash,
-            status: LicenseStatus.Active,
-            validUntil: block.timestamp + (_durationDays * 1 days)
+            licenseNumber: _licenseNumber,
+            fullName: _fullName,
+            agency: _agency,
+            expirationTime: expireTime,
+            isRegistered: true
         });
 
-        licenseToAddress[_licenseNo] = _agentWallet;
-        emit AgentRegistered(_agentWallet, _licenseNo, _fullName);
+        emit BrokerRegistered(_wallet, _licenseNumber, expireTime);
     }
 
-    function isAgentValid(address _agentWallet) external view returns (bool) {
-        Agent memory a = agents[_agentWallet];
-        return (a.status == LicenseStatus.Active && a.validUntil > block.timestamp);
+    /// @notice Renews an existing broker's license
+    function renewBroker(address _wallet, uint256 _additionalDays) external onlyAdmin {
+        if (!brokers[_wallet].isRegistered) revert BrokerNotRegistered();
+        
+        // If already expired, start from now. If active, add to current expiration.
+        if (block.timestamp > brokers[_wallet].expirationTime) {
+            brokers[_wallet].expirationTime = block.timestamp + (_additionalDays * 1 days);
+        } else {
+            brokers[_wallet].expirationTime += (_additionalDays * 1 days);
+        }
+
+        emit BrokerRenewed(_wallet, brokers[_wallet].expirationTime);
+    }
+
+    /// @notice Public function used by the frontend and Escrow contract to verify status
+    function isAgentValid(address _agent) public view returns (bool) {
+        Broker memory broker = brokers[_agent];
+        return (broker.isRegistered && block.timestamp <= broker.expirationTime);
     }
 }
