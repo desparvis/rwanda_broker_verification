@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RWAREB Admin Console</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <header class="header-container">
+        <h1>RWAREB Internal Systems</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <span id="adminAccount" style="font-size: 13px; color: var(--text-muted); font-family: monospace;">Not Connected</span>
+            <button id="connectWalletBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Connect Provider</button>
+            <a href="/logout" class="nav-link" style="color: #FF3B30;">Secure Logout</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Dashboard Stats -->
+        <div style="margin-bottom: 20px; padding: 15px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: var(--text-main);">Total Registered Brokers:</strong>
+            <span id="totalBrokersCount" style="background: var(--rw-blue); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600;">0</span>
+        </div>
+
+        <!-- Issue New License Card -->
+        <section class="card">
+            <div class="card-header">
+                <h2>Issue New Broker License</h2>
+                <p>Write an official certification directly to the AgentRegistry smart contract.</p>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Target Wallet Address</label>
+                    <input type="text" id="regAddress" placeholder="0x..." />
+                </div>
+                <div class="form-group">
+                    <label>NIDA Identification Number</label>
+                    <input type="text" id="regNida" placeholder="1199..." />
+                </div>
+                <div class="form-group">
+                    <label>Official License ID</label>
+                    <input type="text" id="regLicense" placeholder="RWB/B/26/..." />
+                </div>
+                <div class="form-group">
+                    <label>Broker Legal Name</label>
+                    <input type="text" id="regName" placeholder="Full legal name" />
+                </div>
+                <div class="form-group">
+                    <label>Agency Affiliation</label>
+                    <input type="text" id="regAgency" placeholder="Registered agency" />
+                </div>
+                <div class="form-group">
+                    <label>License Validity (Days)</label>
+                    <input type="number" id="regDays" value="365" />
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="registerBtn" class="btn btn-primary">Sign & Execute Transaction</button>
+            </div>
+        </section>
+
+        <!-- Revoke License Card -->
+        <section class="card" style="margin-top: 20px; border-top: 4px solid #FF3B30;">
+            <div class="card-header">
+                <h2 style="color: #FF3B30;">Revoke Broker License</h2>
+                <p>Instantly invalidate a broker's license due to misconduct.</p>
+            </div>
+            
+            <div class="card-body">
+                <div class="form-group" style="border: none; margin: 0; padding: 0;">
+                    <label>Broker Wallet Address to Revoke</label>
+                    <input type="text" id="revokeAddress" placeholder="0x..." />
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button id="revokeBtn" class="btn" style="background-color: #FF3B30; color: white;">Revoke License</button>
+            </div>
+        </section>
+
+        <!-- Live Blockchain Ledger -->
+        <section class="card" style="margin-top: 20px; margin-bottom: 40px;">
+            <div class="card-header">
+                <h2>Registry Database</h2>
+                <p>Live view of all brokers on the blockchain.</p>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Broker Profile</th>
+                            <th>License ID</th>
+                            <th>Agency</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brokerTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                Connect Admin Provider to view ledger...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Applish Modal Component -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Notice</h3>
+            </div>
+            <div class="modal-body" id="modalMessage"></div>
+            <div class="modal-footer">
+                <button class="modal-btn" id="modalCloseBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

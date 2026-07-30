@@ -14,9 +14,13 @@ contract AgentRegistry {
     }
 
     mapping(address => Broker) public brokers;
+    
+    // NEW: Array to track all registered wallets for counting
+    address[] public brokerAddresses; 
 
     event BrokerRegistered(address indexed wallet, string licenseNumber, uint256 expirationTime);
     event BrokerRenewed(address indexed wallet, uint256 newExpirationTime);
+    event BrokerRevoked(address indexed wallet); // NEW: Logs when a broker is banned
 
     error OnlyAdmin();
     error BrokerAlreadyRegistered();
@@ -53,6 +57,9 @@ contract AgentRegistry {
             isRegistered: true
         });
 
+        // NEW: Add the new broker's wallet to our tracking list
+        brokerAddresses.push(_wallet); 
+
         emit BrokerRegistered(_wallet, _licenseNumber, expireTime);
     }
 
@@ -70,7 +77,22 @@ contract AgentRegistry {
         emit BrokerRenewed(_wallet, brokers[_wallet].expirationTime);
     }
 
-    /// @notice Public function used by the frontend and Escrow contract to verify status
+    /// @notice NEW: Instantly revokes a broker's active status
+    function revokeBroker(address _wallet) external onlyAdmin {
+        if (!brokers[_wallet].isRegistered) revert BrokerNotRegistered();
+        
+        brokers[_wallet].isRegistered = false;
+        brokers[_wallet].expirationTime = 0;
+        
+        emit BrokerRevoked(_wallet);
+    }
+
+    /// @notice NEW: Returns the total number of brokers ever registered
+    function getTotalBrokers() external view returns (uint256) {
+        return brokerAddresses.length;
+    }
+
+    /// @notice Public function used by the frontend to verify status
     function isAgentValid(address _agent) public view returns (bool) {
         Broker memory broker = brokers[_agent];
         return (broker.isRegistered && block.timestamp <= broker.expirationTime);

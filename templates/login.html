@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RWAREB | Secure Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh; background-color: var(--bg-color);">
+
+  <div class="card" style="width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+    <div class="card-header" style="text-align: center; padding: 30px 20px 20px 20px;">
+      <h2 style="font-size: 20px;">Restricted Access</h2>
+      <p>RWAREB Internal Systems</p>
+    </div>
+    
+    <div class="card-body">
+      <!-- Show error message if password was wrong -->
+      {% if error %}
+      <div style="background-color: rgba(239, 68, 68, 0.1); color: #b91c1c; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-align: center;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="form-group" style="border: none; padding: 0;">
+          <label>Administrator Password</label>
+          <input type="password" name="password" required placeholder="Enter password..." autofocus style="margin-bottom: 20px;" />
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Authenticate</button>
+      </form>
+    </div>
+    
+    <div class="btn-group" style="justify-content: center; background-color: #fff; border-top: none; padding-top: 0;">
+      <a href="/" class="nav-link" style="font-size: 13px; color: var(--text-muted);">Return to Public Portal</a>
+    </div>
+  </div>
+
+</body>
+</html>
